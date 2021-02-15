@@ -24,6 +24,7 @@ class QLearningAgent(Agent):
 		self.tie_reward = -5
 		self.step_reward = -1
 
+		self.turn = 1
 		self.Q_table_filepath = "qtable.p"
 		self.opponent_agent_training = RandomBot()
 
@@ -100,14 +101,15 @@ class QLearningAgent(Agent):
 
 	def _calculate_reward(self, game):
 		winner = game.who_won()
-		if winner == 1:
+		if winner == self.turn:
 			return self.winning_reward, True
 		elif winner == -1:
 			return self.tie_reward, True
-		elif winner == 2:
-			return self.losing_reward, True
+		elif winner == 0:
+			return self.step_reward, False
 
-		return self.step_reward, False
+		return self.losing_reward, True
+
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from Human import Human
 from RandomBot import RandomBot
 from TicTacToeGame import TicTacToeGame
 from QLearning import QLearningAgent
+from Minimax import Minimax
 
 
 def take_turn(game, agent):
@@ -22,8 +23,9 @@ def take_turn(game, agent):
 
 if __name__ == "__main__":
 	game = TicTacToeGame()
+	agent2 = Minimax()
 	agent1 = QLearningAgent()
-	agent2 = Human()
+	#agent1 = Human()
 	#agent1 = RandomBot()
 
 	done = False
