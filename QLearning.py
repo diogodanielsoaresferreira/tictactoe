@@ -35,34 +35,41 @@ class QLearningAgent(Agent):
 
 	def train(self):
 		for epoch in range(self.epochs):
-			game_done = False
 			game = TicTacToeGame()
+			game_done = False
 
 			while not game_done:
-				action = self._epsilon_greedy_policy(game)
+
 				state = self._hash_board(game.board)
-				self._make_move(game, action)
-
-				reward, game_done = self._calculate_reward_random(game)
-				new_state = self._hash_board(game.board)
-
 				if state not in self.Q_table:
 					self.Q_table[state] = {action: 0}
 
+				action = self._epsilon_greedy_policy(game)
 				if action not in self.Q_table[state]:
 					self.Q_table[state][action] = 0
 
-				if new_state not in self.Q_table:
-					self.Q_table[new_state] = {action: 0}
+				self._make_move(game, action)
+				reward, game_done = self._calculate_reward(game)	
+				if game_done:
+					self._update_qtable(game.board, state, action, reward)
+					break
 
-				self.Q_table[state][action] = self.Q_table[state][action] + \
-					self.learning_rate * (reward + self.gamma * max(self.Q_table[new_state].values()) - self.Q_table[state][action])
+				self._opponent_move(game)
+				self._update_qtable(game.board, state, action, reward)
 
 		with open(self.Q_table_filepath, 'wb') as f:
 			pickle.dump(self.Q_table, f)
 
 	def get_next_action(self, game):
 		return self._greedy_policy(game)
+
+	def _update_qtable(self, board, state, action, reward):
+		new_state = self._hash_board(board)
+		if new_state not in self.Q_table:
+			self.Q_table[new_state] = {action: 0}
+		
+		self.Q_table[state][action] = self.Q_table[state][action] + \
+						self.learning_rate * (reward + self.gamma * max(self.Q_table[new_state].values()) - self.Q_table[state][action])
 
 	def _make_move(self, game, action):
 		if not game.play(*action):
@@ -86,17 +93,18 @@ class QLearningAgent(Agent):
 			return random.choice(possible_actions)
 		return max(possible_actions_with_score.items(), key=operator.itemgetter(1))[0]
 
-	def _calculate_reward_random(self, game):
+	def _opponent_move(self, game):
+		opponent_action = self.opponent_agent_training.get_next_action(game)
+		self._make_move(game, opponent_action)
+
+
+	def _calculate_reward(self, game):
 		winner = game.who_won()
 		if winner == 1:
 			return self.winning_reward, True
 		elif winner == -1:
 			return self.tie_reward, True
-
-		opponent_action = self.opponent_agent_training.get_next_action(game)
-		self._make_move(game, opponent_action)
-		winner = game.who_won()
-		if winner == 2:
+		elif winner == 2:
 			return self.losing_reward, True
 
 		return self.step_reward, False
