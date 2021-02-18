@@ -12,7 +12,7 @@ class QLearningAgent(Agent):
 	
 	def __init__(self):
 
-		self.epochs = 2500
+		self.epochs = 25000
 		self.Q_table = {}
 
 		self.epsilon = 0.3
@@ -52,11 +52,11 @@ class QLearningAgent(Agent):
 				self._make_move(game, action)
 				reward, game_done = self._calculate_reward(game)	
 				if game_done:
-					self._update_qtable(game.board, state, action, reward)
+					self._update_qtable(game.board, state, action, reward, game_done)
 					break
 
 				self._opponent_move(game)
-				self._update_qtable(game.board, state, action, reward)
+				self._update_qtable(game.board, state, action, reward, game_done)
 
 		with open(self.Q_table_filepath, 'wb') as f:
 			pickle.dump(self.Q_table, f)
@@ -64,13 +64,17 @@ class QLearningAgent(Agent):
 	def get_next_action(self, game):
 		return self._greedy_policy(game)
 
-	def _update_qtable(self, board, state, action, reward):
+	def _update_qtable(self, board, state, action, reward, game_done):
 		new_state = self._hash_board(board)
 		if new_state not in self.Q_table:
 			self.Q_table[new_state] = {action: 0}
 		
-		self.Q_table[state][action] = self.Q_table[state][action] + \
-						self.learning_rate * (reward + self.gamma * max(self.Q_table[new_state].values()) - self.Q_table[state][action])
+		if not game_done:
+				self.Q_table[state][action] = self.Q_table[state][action] + \
+					self.learning_rate * (reward + self.gamma * max(self.Q_table[new_state].values()) - self.Q_table[state][action])
+		else:
+			self.Q_table[state][action] = self.Q_table[state][action] + \
+				self.learning_rate * (reward - self.Q_table[state][action])
 
 	def _make_move(self, game, action):
 		if not game.play(*action):

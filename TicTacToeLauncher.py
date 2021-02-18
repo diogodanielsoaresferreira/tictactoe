@@ -24,8 +24,8 @@ def take_turn(game, agent):
 if __name__ == "__main__":
 	game = TicTacToeGame()
 	agent2 = Minimax()
-	agent1 = QLearningAgent()
-	#agent1 = Human()
+	#agent1 = QLearningAgent()
+	agent1 = Human()
 	#agent1 = RandomBot()
 
 	done = False
